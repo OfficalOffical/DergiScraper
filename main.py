@@ -1,3 +1,4 @@
+import pandas
 import requests, PyPDF2
 from io import BytesIO
 
@@ -22,7 +23,7 @@ def runThePyPDFApi():
 
 
 def pullLinksFromThePage():
-    links = []
+
 
     url = 'https://services.tubitak.gov.tr/edergi/yillaraGoreArsiv.htm'
 
@@ -36,83 +37,76 @@ def pullLinksFromThePage():
     #get the page source
 
 
+    tempTur =0
 
 
+    #create dictionary for each year, link, and x
 
-
+    df = pandas.DataFrame(columns=['Tur','Yıl','Ay', 'Link'])
+    error = pandas.DataFrame(columns=['Tur','Yıl','Ay'])
 
     for i in range(1, 4):
+        if i == 1:
+            tempTur = "Bilim ve Teknik E-dergisi"
+
+
         if (i == 2):
+
             driver.find_element(By.ID, "dergiSelect").click()
             dropdown = driver.find_element(By.ID, "dergiSelect")
             dropdown.find_element(By.XPATH, "//option[. = 'Bilim Çocuk E-dergisi']").click()
+            tempTur = "Bilim Çocuk E-dergisi"
+
+
         elif (i == 3):
             driver.find_element(By.ID, "dergiSelect").click()
             dropdown = driver.find_element(By.ID, "dergiSelect")
             dropdown.find_element(By.XPATH, "//option[. = 'Meraklı Minik E-dergisi']").click()
-        for year in range(2022, 2020, -1):
+            tempTur = "Meraklı Minik E-dergisi"
 
+
+        for year in range(2022, 2007, -1):
             driver.find_element(By.ID, "yilSelect").click()
             dropdown = driver.find_element(By.ID, "yilSelect")
             tempYearHolder = "//option[. = '{}']".format(year)
             dropdown.find_element(By.XPATH, tempYearHolder).click()
 
 
-            for x in range(1, 8):
+            for x in range(1, 13):
+
                 try:
                     tempTextHolder = ".col-sm-3:nth-child({0}) img".format(x)
                     driver.find_element(By.CSS_SELECTOR, tempTextHolder).click()
 
                     b = driver.find_element(By.LINK_TEXT, "Tüm sayıyı görmek için tıklayınız.")
                     c = b.get_attribute('href')
-                    print(c)
+
+                    #create nested dictionary
+
+                    #add to dataframe with pandas concat function
+                    df = pandas.concat([df, pandas.DataFrame({'Tur': [tempTur], 'Yıl': [year], 'Ay': [x], 'Link': [c]})], ignore_index=True)
+
+
+
+
+
                     driver.back()
 
+
                 except Exception as e:
-                    print("Dergi :", year , "Sayı :", x)
+                    error = pandas.concat([error, pandas.DataFrame({'Tur': [tempTur], 'Yıl': [year], 'Ay': [x]})], ignore_index=True)
                     driver.get(url)
 
 
+    df.to_csv('output.csv', index=False)
+    error.to_csv('error.csv', index=False)
+    print(df.head())
+    print(df.tail())
+
+    driver.close()
 
 
-
-
-
-
-
-
-
-
-
-
-    sleep(5)
-
-
-
-
-
-
-
-
-
-
-    sleep(11)
-
-
-
-
-    #find text in driver
-    """
-    b = driver.find_element(By.LINK_TEXT, "Tüm sayıyı görmek için tıklayınız.")
-    c = b.get_attribute('href')
-    print(c)"""
-
-
-
-
-
-
-    return links
+    return df
 
 
 pullLinksFromThePage()
