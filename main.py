@@ -8,18 +8,25 @@ from selenium import webdriver
 from time import sleep
 from selenium.webdriver.common.by import By
 
-def runThePyPDFApi():
-    url = 'https://services.tubitak.gov.tr/edergi/yazi.pdf?dergiKodu=4&cilt=46&sayiid=801&yil=2013&ay=3&mod=tum'
+def runThePyPDFApi(url):
+
+
+
+    #take links in df and run them through the api
+
     response = requests.get(url)
     my_raw_data = response.content
 
+    tempTextHolder = []
 
     with BytesIO(my_raw_data) as data:
         read_pdf = PyPDF2.PdfReader(data)
 
         for page in read_pdf.pages:
-            print(page.extractText())
-            print('--------------------------------------')
+            tempTextHolder.append(page.extractText())
+            tempTextHolder.append("\nnextpageseperator\n")
+
+    return tempTextHolder
 
 
 def pullLinksFromThePage():
@@ -109,6 +116,31 @@ def pullLinksFromThePage():
     return df
 
 
-pullLinksFromThePage()
+
+"""tempArray = []
+
+
+
+maindf = pandas.read_csv('output.csv')
+for x in range(0, 451):
+
+    if x % 50 == 0:
+        print(x)
+        tempStr = "Text" + str(x) + ".csv"
+        tempArray.append(pandas.read_csv(tempStr))
+
+
+tempArray.append(pandas.read_csv("LastText.csv"))
+
+df = pandas.concat(tempArray, ignore_index=True)
+print(df.head())
+
+maindf = pandas.concat([maindf, df], axis=1)
+
+maindf.to_csv('outputWithText.csv', index=False)
+"""
+
+maindf = pandas.read_csv('output.csv')
+print(maindf.head())
 
 
